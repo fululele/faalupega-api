@@ -43,7 +43,7 @@ Copy `.env.example` to `.env` and configure:
 | `DB_PASSWORD` | MySQL password |
 | `DB_NAME` | MySQL database |
 | `JWT_SECRET` | Secret for signing JWTs |
-| `CORS_ORIGIN` | Frontend URL (e.g. `http://localhost:3000`) |
+| `CORS_ORIGIN` | Allowed frontend URL(s), comma-separated (e.g. `http://localhost:3000,https://your-app.vercel.app`) |
 
 ## Database
 

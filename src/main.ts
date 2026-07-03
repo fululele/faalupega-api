@@ -9,6 +9,17 @@ import { AppModule } from "./app.module";
 
 config();
 
+function parseCorsOrigins(value: string | undefined): string | string[] {
+  const defaultOrigin = "http://localhost:3000";
+  const raw = value?.trim() || defaultOrigin;
+  const origins = raw
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
+
+  return origins.length === 1 ? origins[0] : origins;
+}
+
 async function bootstrap() {
   const httpsEnabled = process.env.HTTPS_ENABLED === "true";
   const keyPath = process.env.SSL_KEY_PATH;
@@ -36,7 +47,7 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: appConfig.get<string>("CORS_ORIGIN", "http://localhost:3000"),
+    origin: parseCorsOrigins(appConfig.get<string>("CORS_ORIGIN")),
     credentials: true,
   });
 
