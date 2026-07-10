@@ -14,7 +14,7 @@ function parseCorsOrigins(value: string | undefined): string | string[] {
   const raw = value?.trim() || defaultOrigin;
   const origins = raw
     .split(",")
-    .map((origin) => origin.trim())
+    .map((origin) => origin.trim().replace(/\/$/, ""))
     .filter((origin) => origin.length > 0);
 
   return origins.length === 1 ? origins[0] : origins;
