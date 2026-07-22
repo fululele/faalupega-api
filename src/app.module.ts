@@ -9,6 +9,8 @@ import { UserModule } from "./user/user.module";
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ".env",
+      ignoreEnvFile: false,
+      expandVariables: true,
     }),
     DatabaseModule,
     UserModule,
