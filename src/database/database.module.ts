@@ -15,10 +15,21 @@ function isSet(value: string | undefined): boolean {
   return Boolean(value?.trim());
 }
 
+function stripQuotes(value: string): string {
+  return value.replace(/^["']|["']$/g, "").trim();
+}
+
+function readEnv(config: ConfigService, key: string): string | undefined {
+  const fromConfig = config.get<string>(key);
+  const fromProcess = process.env[key];
+  const value = fromConfig ?? fromProcess;
+  return value ? stripQuotes(value) : undefined;
+}
+
 function readIndividualVars(config: ConfigService): DatabaseConfig {
   const get = (keys: string[], fallback: string): string => {
     for (const key of keys) {
-      const value = config.get<string>(key)?.trim();
+      const value = readEnv(config, key);
       if (value) {
         return value;
       }
@@ -26,21 +37,20 @@ function readIndividualVars(config: ConfigService): DatabaseConfig {
     return fallback;
   };
 
-  const portRaw = get(["DB_PORT", "MYSQLPORT"], "3306");
+  const portRaw = get(["MYSQLPORT", "DB_PORT"], "3306");
 
   return {
-    host: get(["DB_HOST", "MYSQLHOST"], "localhost"),
+    host: get(["MYSQLHOST", "DB_HOST"], "localhost"),
     port: Number(portRaw),
-    user: get(["DB_USER", "MYSQLUSER"], "faalupega"),
-    password: get(["DB_PASSWORD", "MYSQLPASSWORD"], "faalupega"),
-    database: get(["DB_NAME", "MYSQLDATABASE"], "faalupega"),
+    user: get(["MYSQLUSER", "DB_USER"], "faalupega"),
+    password: get(["MYSQLPASSWORD", "DB_PASSWORD"], "faalupega"),
+    database: get(["MYSQLDATABASE", "DB_NAME"], "faalupega"),
   };
 }
 
 function readUrlVar(config: ConfigService): DatabaseConfig | null {
   const mysqlUrl =
-    config.get<string>("MYSQL_URL")?.trim() ||
-    config.get<string>("DATABASE_URL")?.trim();
+    readEnv(config, "MYSQL_URL") || readEnv(config, "DATABASE_URL");
 
   if (!mysqlUrl?.startsWith("mysql")) {
     return null;
@@ -72,14 +82,23 @@ function readUrlVar(config: ConfigService): DatabaseConfig | null {
 
         logger.log(
           "DB env present: " +
-            `DB_HOST=${isSet(config.get("DB_HOST"))}, ` +
-            `MYSQLHOST=${isSet(config.get("MYSQLHOST"))}, ` +
-            `MYSQL_URL=${isSet(config.get("MYSQL_URL"))}, ` +
+            `MYSQL_URL=${isSet(readEnv(config, "MYSQL_URL"))}, ` +
+            `MYSQLHOST=${isSet(readEnv(config, "MYSQLHOST"))}, ` +
+            `MYSQLUSER=${isSet(readEnv(config, "MYSQLUSER"))}, ` +
+            `MYSQLPASSWORD=${isSet(readEnv(config, "MYSQLPASSWORD"))}, ` +
+            `DB_USER=${isSet(readEnv(config, "DB_USER"))}, ` +
             `source=${fromUrl ? "MYSQL_URL" : "individual vars"}`,
         );
         logger.log(
-          `Connecting to MySQL at ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`,
+          `Connecting to MySQL as ${dbConfig.user} at ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`,
         );
+
+        if (isProduction && dbConfig.user === "faalupega") {
+          logger.error(
+            "Using dev default user 'faalupega'. Remove plain-text DB_USER/DB_PASSWORD " +
+              "from the API service if present, and keep MYSQL_URL or MYSQLUSER references only.",
+          );
+        }
 
         if (
           isProduction &&
