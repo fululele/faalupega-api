@@ -49,22 +49,34 @@ function readIndividualVars(config: ConfigService): DatabaseConfig {
 }
 
 function readUrlVar(config: ConfigService): DatabaseConfig | null {
+  const logger = new Logger("DatabaseModule");
   const mysqlUrl =
     readEnv(config, "MYSQL_URL") || readEnv(config, "DATABASE_URL");
 
-  if (!mysqlUrl?.startsWith("mysql")) {
+  if (!isSet(mysqlUrl) || !mysqlUrl!.startsWith("mysql://")) {
+    logger.warn(
+      `MYSQL_URL/DATABASE_URL is not a valid mysql:// connection string ` +
+        `(value=${mysqlUrl ? `"${mysqlUrl}"` : "unset"}). Falling back to individual vars.`,
+    );
     return null;
   }
 
-  const url = new URL(mysqlUrl);
+  try {
+    const url = new URL(mysqlUrl!);
 
-  return {
-    host: url.hostname,
-    port: Number(url.port || 3306),
-    user: decodeURIComponent(url.username),
-    password: decodeURIComponent(url.password),
-    database: url.pathname.replace(/^\//, ""),
-  };
+    return {
+      host: url.hostname,
+      port: Number(url.port || 3306),
+      user: decodeURIComponent(url.username),
+      password: decodeURIComponent(url.password),
+      database: url.pathname.replace(/^\//, ""),
+    };
+  } catch (error) {
+    logger.error(
+      `Failed to parse MYSQL_URL/DATABASE_URL as a URL: ${(error as Error).message}`,
+    );
+    return null;
+  }
 }
 
 @Global()
