@@ -60,7 +60,15 @@ Schema is applied automatically on first container start via `db/init/`.
 
 Link your MySQL service to the API service, then either:
 
-1. **Reference Railway MySQL vars** on the API service (recommended):
+1. **Single reference (easiest)** — on the **API service**, add one variable:
+
+   ```
+   MYSQL_URL=${{MySQL.MYSQL_URL}}
+   ```
+
+   Replace `MySQL` with your MySQL service name exactly as shown on the Railway canvas.
+
+2. **Individual references** — on the **API service** (not MySQL, not shared):
 
    ```
    DB_HOST=${{MySQL.MYSQLHOST}}
@@ -70,9 +78,7 @@ Link your MySQL service to the API service, then either:
    DB_NAME=${{MySQL.MYSQLDATABASE}}
    ```
 
-   Replace `MySQL` with your MySQL service name if different.
-
-2. **Or** rely on the built-in fallbacks: the API also reads `MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`, `MYSQLPASSWORD`, and `MYSQLDATABASE` when `DB_*` is unset.
+   Variables on the MySQL service's own Variables tab are **not** automatically visible to the API. Shared variables are optional and not required for this setup.
 
 Apply the schema once against the Railway database (e.g. via Railway's MySQL shell or `mysql` CLI):
 
