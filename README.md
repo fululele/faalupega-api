@@ -56,6 +56,32 @@ npm run db:down
 
 Schema is applied automatically on first container start via `db/init/`.
 
+### Railway
+
+Link your MySQL service to the API service, then either:
+
+1. **Reference Railway MySQL vars** on the API service (recommended):
+
+   ```
+   DB_HOST=${{MySQL.MYSQLHOST}}
+   DB_PORT=${{MySQL.MYSQLPORT}}
+   DB_USER=${{MySQL.MYSQLUSER}}
+   DB_PASSWORD=${{MySQL.MYSQLPASSWORD}}
+   DB_NAME=${{MySQL.MYSQLDATABASE}}
+   ```
+
+   Replace `MySQL` with your MySQL service name if different.
+
+2. **Or** rely on the built-in fallbacks: the API also reads `MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`, `MYSQLPASSWORD`, and `MYSQLDATABASE` when `DB_*` is unset.
+
+Apply the schema once against the Railway database (e.g. via Railway's MySQL shell or `mysql` CLI):
+
+```bash
+mysql -h $MYSQLHOST -P $MYSQLPORT -u $MYSQLUSER -p$MYSQLPASSWORD $MYSQLDATABASE < db/init/01-schema.sql
+```
+
+Redeploy the API after changing variables.
+
 Query the database:
 
 ```bash
