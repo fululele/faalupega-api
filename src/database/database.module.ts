@@ -88,6 +88,34 @@ function readUrlVar(config: ConfigService): DatabaseConfig | null {
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
         const logger = new Logger("DatabaseModule");
+
+        // Verbose raw-value debugging: log EXACTLY what ConfigService and
+        // process.env are returning, before any stripping/parsing happens.
+        // This is temporary diagnostic logging to track down why MYSQL_URL
+        // is being reported as unset in production.
+        const rawDebugKeys = [
+          "MYSQL_URL",
+          "DATABASE_URL",
+          "MYSQLHOST",
+          "MYSQLPORT",
+          "MYSQLUSER",
+          "MYSQLPASSWORD",
+          "MYSQLDATABASE",
+        ];
+
+        logger.warn("=== RAW DB ENV DEBUG (before stripQuotes/readUrlVar) ===");
+        for (const key of rawDebugKeys) {
+          const fromConfigRaw = config.get<string>(key);
+          const fromProcessRaw = process.env[key];
+          logger.warn(
+            `[RAW] ${key}: config.get()=${JSON.stringify(fromConfigRaw)} ` +
+              `(type=${typeof fromConfigRaw}), process.env[${key}]=${JSON.stringify(
+                fromProcessRaw,
+              )} (type=${typeof fromProcessRaw})`,
+          );
+        }
+        logger.warn("=== END RAW DB ENV DEBUG ===");
+
         const fromUrl = readUrlVar(config);
         const dbConfig = fromUrl ?? readIndividualVars(config);
         const isProduction = config.get<string>("NODE_ENV") === "production";
