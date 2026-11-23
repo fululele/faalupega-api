@@ -18,6 +18,15 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+  mongo:
+    image: mongo:8
+    container_name: faalupega-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
 
 volumes:
   mysql_data:
+  mongo_data:
